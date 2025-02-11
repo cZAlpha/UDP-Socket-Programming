@@ -26,11 +26,12 @@ def upload_file(server_socket: socket, file_name: str, file_size: int):
         # TODO: section 1 step 7a - 7e in README.md file
         
         # 7a
-        chunk, client_address = server_socket.recvfrom(BUFFER_SIZE) # Receive a chunk of data
         counter = 0
         received_file_size = 0
         
-        while chunk and received_file_size < file_size: # 7e            
+        while received_file_size < file_size: # 7e  
+            chunk, client_address = server_socket.recvfrom(BUFFER_SIZE) # Receive a chunk of data
+            
             # 7b
             file.write(chunk) # Write the data to the file
             
@@ -51,11 +52,11 @@ def upload_file(server_socket: socket, file_name: str, file_size: int):
     client_hash, client_address = server_socket.recvfrom(BUFFER_SIZE)
     
     # TODO: section 1 step 9 in README.md file
-    if (client_hash != sha256.digest()):
+    if (client_hash == sha256.digest()):
         print("[+] File tranfser was successful.")
         server_socket.sendto(b'success', client_address)
     else:
-        print("[+] File tranfser FAILED.")
+        print("[+] File tranfser FAILED. Hashes did not match")
         server_socket.sendto(b'failed', client_address)
     
     print("[+] upload_file function has concluded.")

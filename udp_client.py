@@ -2,16 +2,17 @@ import socket
 import hashlib  # needed to calculate the SHA256 hash of the file
 import sys  # needed to get cmd line parameters
 import os.path as path  # needed to get size of file in bytes
+import math
 
 
 DR_R_SERVER_IP = '10.33.20.21'
-IP = DR_R_SERVER_IP
-# IP = '127.0.0.1'  # change to the IP address of the server
+#IP = DR_R_SERVER_IP
+IP = '127.0.0.1'  # change to the IP address of the server
 PORT = 12000  # change to a desired port number
 BUFFER_SIZE = 1024  # change to a desired buffer size
 
-FILE_PATH = "ProgrammingAssignments/ProgrammingAssignment1/csci-330-ProgrammingAssignment1/vs_code.png"
-
+FILE_PATH = "/Users/nbklaus21/Documents/VSCodeProjects/devDSU2025/ComputerNetworking/ProgrammingAssignments/ProgrammingAssignment1/UDP-Socket-Programming/vs_code.png"
+FILE_PATH_TXT = "/Users/nbklaus21/Documents/VSCodeProjects/devDSU2025/ComputerNetworking/ProgrammingAssignments/ProgrammingAssignment1/UDP-Socket-Programming/text_file.txt"
 
 def get_file_size(file_name: str) -> int:
     size = 0
@@ -57,23 +58,28 @@ def send_file(filename: str):
             raise Exception('Bad server response - was not go ahead!')
         print("[+] Received 'go ahead' from server.")
         
-        num_of_chunks = get_file_size(filename) // BUFFER_SIZE
+        num_of_chunks = math.ceil(get_file_size(file_name) / BUFFER_SIZE)
         print(f"[+] {num_of_chunks} chunks to send.")
         
         print("[+] Starting file transfer...")
         # open the file to be transferred
+        
         with open(file_name, 'rb') as file: 
             # TODO: section 2 step 8 a-d in README.md file | read the file in chunks and send each chunk to the server
             # 8a
             chunk = file.read(BUFFER_SIZE)
             
+            counter = 0
             # 8b
-            if len(chunk) > 0:
+            while chunk:
+                print(f"[+] Sending chunk #{counter}")
+                counter += 1
                 sha256.update(chunk) # 8b-i
                 client_socket.sendto(chunk, address) # 8b-ii
                 response = client_socket.recv(BUFFER_SIZE)
                 if response != b'received': # 8b-iii
                     raise Exception("Bad server response - was not received!")
+                chunk = file.read(BUFFER_SIZE)
         
         # send the hash value so server can verify that the file was
         # received correctly.
@@ -86,8 +92,10 @@ def send_file(filename: str):
         # TODO: section 2 step 11 in README.md file
         if response == b'failed':
             raise Exception('Transfer failed!')
+        elif response == b'success':
+            print('[+] Transfer completed successfully!')
         else:
-            print('Transfer completed!')
+            raise Exception('Transfer INCOMPLETE. No response from server after file transfer finished.')
         
     except Exception as e:
         print(f'An error occurred while sending the file: {e}')
